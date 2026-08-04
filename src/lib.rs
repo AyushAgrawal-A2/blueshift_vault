@@ -4,7 +4,9 @@ use pinocchio::{
     cpi::{Seed, Signer},
     entrypoint,
     error::ProgramError,
-    nostd_panic_handler, AccountView, Address, ProgramResult,
+    nostd_panic_handler,
+    sysvars::{rent::Rent, Sysvar},
+    AccountView, Address, ProgramResult,
 };
 use pinocchio_system::instructions::Transfer;
 
@@ -64,7 +66,7 @@ impl<'a> TryFrom<&'a [u8]> for DepositInstructionData {
             return Err(ProgramError::InvalidInstructionData);
         }
         let amount = u64::from_le_bytes(data.try_into().unwrap());
-        if amount.eq(&0) {
+        if amount <= Rent::get()?.try_minimum_balance(0)? {
             return Err(ProgramError::InvalidInstructionData);
         }
         Ok(Self { amount })
